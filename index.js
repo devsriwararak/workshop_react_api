@@ -75,15 +75,15 @@ app.post("/login", async (req, res) => {
 // Products
 app.post("/product", async (req, res) => {
   try {
-    const { user_id, name, qty, price } = req.body;
+    const { user_id, name, qty, price, image } = req.body;
     if (user_id) {
       const sqlCheck = `SELECT id FROM products WHERE name = ? AND user_id = ?`;
       const [resultCheck] = await pool.query(sqlCheck, [name, user_id]);
       if (resultCheck.length > 0) {
         throw new Error("คุณมีสินค้านี้ในสต๊อกแล้ว");
       } else {
-        const sql = `INSERT  INTO products (name, qty, price, user_id) VALUES (?, ?, ?, ?)`;
-        await pool.query(sql, [name, qty, price, user_id]);
+        const sql = `INSERT  INTO products (name, qty, price, image, user_id) VALUES (?, ?, ?, ?, ?)`;
+        await pool.query(sql, [name, qty, price, image, user_id]);
         res.status(200).json({ message: "บันทึกสำเร็จ" });
       }
     } else {
