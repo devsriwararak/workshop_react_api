@@ -10,13 +10,12 @@ const secretKey = "10";
 app.use(express.json());
 app.use(cors());
 
-
 const pool = mysql.createPool({
-    host: "147.50.231.19",
-    user: "devsriwa_workshop_react",
-    password: "*Nextsoft1234",
-    database: "devsriwa_workshop_react",
-  });
+  host: "147.50.231.19",
+  user: "devsriwa_workshop_react",
+  password: "*Nextsoft1234",
+  database: "devsriwa_workshop_react",
+});
 
 app.get("/", (req, res) => {
   res.status(200).json({ message: "hellow wold" });
@@ -60,6 +59,7 @@ app.post("/login", async (req, res) => {
           }
         );
         res.status(200).json({ token });
+        console.log(token);
       } else {
         throw new Error("ไม่พบผู้ใช้งาน");
       }
@@ -100,7 +100,7 @@ app.get("/product", async (req, res) => {
     const { user_id } = req.query;
 
     if (user_id) {
-      const sql = `SELECT id, name, qty, price FROM products WHERE user_id = ?`;
+      const sql = `SELECT id, name, qty, price, image FROM products WHERE user_id = ?`;
       const [result] = await pool.query(sql, [user_id]);
       res.status(200).json(result);
     } else {
@@ -141,14 +141,38 @@ app.delete("/product/:id", async (req, res) => {
   try {
     const { id } = req.params;
     if (id) {
-        const sql = `DELETE FROM products WHERE id = ?`
-        await pool.query(sql, [id])
-        res.status(200).json({message:"ลบสำเร็จ"})
+      const sql = `DELETE FROM products WHERE id = ?`;
+      await pool.query(sql, [id]);
+      res.status(200).json({ message: "ลบสำเร็จ" });
     } else {
       throw new Error("ไม่พบผู้ใช่งาน");
     }
   } catch (error) {
     console.log(error);
+    res.status(500).json(error.message);
+  }
+});
+
+// Sales
+app.put("/sale", async (req, res) => {
+  try {
+    const { user_id, id, qty } = req.body;
+    console.log(req.body);
+
+    // เช็คว่ามีจำนวนพอขายไหม
+    const sqlCheck = `SELECT qty FROM products WHERE  id = ?`;
+    const [resultCheck] = await pool.query(sqlCheck, [id]);
+
+    if (resultCheck[0].qty < qty) {
+      throw new Error("จำนวนสินค้าไม่เพียงพอ");
+    } else {
+      const total = resultCheck[0].qty - qty
+      const sql = `UPDATE products SET qty = ? WHERE id = ?`
+      await pool.query(sql, [total, id])
+      res.status(200).json({message: "บันทึกสำเร็จ"})
+    }
+  } catch (error) {
+    console.error(error);
     res.status(500).json(error.message);
   }
 });
